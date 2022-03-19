@@ -83,8 +83,8 @@ func DownloadAllColumn(c *cli.Context) {
 	}
 
 	renderCourses(columns)
-	for _, column := range columns {
-		fmt.Println(column.ColumnTitle)
+	for index, column := range columns {
+		fmt.Println("第 ", index, "/", len(columns), " 名称:", column.ColumnTitle)
 
 		cid := column.ID
 		course, articles, err := application.CourseWithArticles(cid)

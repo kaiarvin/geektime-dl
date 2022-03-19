@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mmzou/geektime-dl/cli/application"
 	"github.com/mmzou/geektime-dl/downloader"
@@ -14,7 +15,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-//NewDownloadCommand login command
+// NewDownloadCommand login command
 func NewDownloadCommand() []cli.Command {
 	return []cli.Command{
 		{
@@ -35,7 +36,7 @@ func downloadAction(c *cli.Context) error {
 		return errors.New("请输入课程ID")
 	}
 
-	//课程目录ID
+	// 课程目录ID
 	aid := 0
 	if len(args) > 1 {
 		aid, err = strconv.Atoi(args.Get(1))
@@ -78,7 +79,7 @@ func downloadAction(c *cli.Context) error {
 		return errors[0]
 	}
 
-	//如果是专栏，则需要打印内容
+	// 如果是专栏，则需要打印内容
 	if course.IsColumn() {
 		path, err := utils.Mkdir(utils.FileName(course.ColumnTitle, ""), "PDF")
 		if err != nil {
@@ -89,9 +90,16 @@ func downloadAction(c *cli.Context) error {
 			if !datum.IsCanDL {
 				continue
 			}
-			if err := downloader.PrintToPDF(datum, cookies, path); err != nil {
+
+			err, exist := downloader.PrintToPDF(datum, cookies, path)
+			if err != nil {
 				errors = append(errors, err)
 			}
+
+			if !exist {
+				time.Sleep(3 * time.Second)
+			}
+
 		}
 	}
 
@@ -102,9 +110,8 @@ func downloadAction(c *cli.Context) error {
 	return nil
 }
 
-//生成下载数据
+// 生成下载数据
 func extractDownloadData(course *service.Course, articles []*service.Article, aid int) downloader.Data {
-
 	downloadData := downloader.Data{
 		Title: course.ColumnTitle,
 	}
@@ -120,7 +127,7 @@ func extractDownloadData(course *service.Course, articles []*service.Article, ai
 	return downloadData
 }
 
-//生成专栏下载数据
+// 生成专栏下载数据
 func extractColumnDownloadData(articles []*service.Article, aid int) []downloader.Datum {
 	data := downloader.EmptyData
 
@@ -160,7 +167,7 @@ func extractColumnDownloadData(articles []*service.Article, aid int) []downloade
 	return data
 }
 
-//生成视频下载数据
+// 生成视频下载数据
 func extractVideoDownloadData(articles []*service.Article, aid int) []downloader.Datum {
 	data := downloader.EmptyData
 

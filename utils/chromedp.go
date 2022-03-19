@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"strconv"
@@ -15,7 +16,7 @@ import (
 	"github.com/chromedp/chromedp/device"
 )
 
-//ColumnPrintToPDF print pdf
+// ColumnPrintToPDF print pdf
 func ColumnPrintToPDF(aid int, filename string, cookies map[string]string) error {
 	var buf []byte
 	// create chrome instance
@@ -31,10 +32,10 @@ func ColumnPrintToPDF(aid int, filename string, cookies map[string]string) error
 
 	err := chromedp.Run(ctx,
 		chromedp.Tasks{
-			chromedp.Emulate(device.IPhone7),
+			chromedp.Emulate(device.KindleFireHDX),
 			enableLifeCycleEvents(),
 			setCookies(cookies),
-			navigateAndWaitFor(`https://time.geekbang.org/column/article/`+strconv.Itoa(aid), "firstMeaningfulPaint"),
+			navigateAndWaitFor(`https://time.geekbang.org/column/article/`+strconv.Itoa(aid), "firstImagePaint"),
 			chromedp.ActionFunc(func(ctx context.Context) error {
 				s := `
 					document.querySelector('.iconfont').parentElement.parentElement.style.display='none';
@@ -48,11 +49,9 @@ func ColumnPrintToPDF(aid int, filename string, cookies map[string]string) error
 				if err != nil {
 					return err
 				}
-
 				if exp != nil {
 					return exp
 				}
-
 				return nil
 			}),
 			chromedp.ActionFunc(func(ctx context.Context) error {
@@ -69,28 +68,25 @@ func ColumnPrintToPDF(aid int, filename string, cookies map[string]string) error
 				if err != nil {
 					return err
 				}
-
 				if exp != nil {
 					return exp
 				}
-
 				return nil
 			}),
-
 			chromedp.ActionFunc(func(ctx context.Context) error {
 				// time.Sleep(time.Second * 5)
 				var err error
-				buf, _, err = page.PrintToPDF().WithPrintBackground(true).Do(ctx)
+				buf, _, err = page.PrintToPDF().WithPrintBackground(false).Do(ctx)
+				// fmt.Println(string(buf))
 				return err
 			}),
 		},
 	)
-
 	if err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(filename, buf, 0644)
+	return ioutil.WriteFile(filename, buf, 0o644)
 }
 
 func setCookies(cookies map[string]string) chromedp.ActionFunc {
@@ -100,6 +96,7 @@ func setCookies(cookies map[string]string) chromedp.ActionFunc {
 		for key, value := range cookies {
 			err := network.SetCookie(key, value).WithExpires(&expr).WithDomain(".geekbang.org").WithHTTPOnly(true).Do(ctx)
 			if err != nil {
+				fmt.Println("setCookies Error! err:", err)
 				return err
 			}
 		}

@@ -1,21 +1,22 @@
 package service
 
-import "github.com/mmzou/geektime-dl/utils"
+import (
+	"github.com/mmzou/geektime-dl/utils"
+)
 
-//Columns 获取专栏
+// Columns 获取专栏
 func (s *Service) Columns() ([]*Course, error) {
 	return s.getCourses(1)
 }
 
-//Videos 获取专栏
+// Videos 获取专栏
 func (s *Service) Videos() ([]*Course, error) {
 	return s.getCourses(3)
 }
 
-//获取课程信息
+// 获取课程信息
 func (s *Service) getCourses(courseType int) ([]*Course, error) {
 	ids, err := s.courses(courseType)
-
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +26,6 @@ func (s *Service) getCourses(courseType int) ([]*Course, error) {
 
 func (s *Service) courses(courseType int) ([]int, error) {
 	body, err := s.requestCourses(courseType)
-
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (s *Service) getCourseDetail(ids []int) ([]*Course, error) {
 	return courses, nil
 }
 
-//ShowCourse 获取课程信息
+// ShowCourse 获取课程信息
 func (s *Service) ShowCourse(id int) (*Course, error) {
 	body, err := s.requestCourseIntro(id)
 	if err != nil {
@@ -77,7 +77,7 @@ func (s *Service) ShowCourse(id int) (*Course, error) {
 	return course, nil
 }
 
-//Articles get course articles
+// Articles get course articles
 func (s *Service) Articles(id int) ([]*Article, error) {
 	body, err := s.requestCourseArticles(id)
 	if err != nil {
@@ -93,7 +93,7 @@ func (s *Service) Articles(id int) ([]*Article, error) {
 	return articleResult.Articles, nil
 }
 
-//VideoPlayAuth 获取视频的播放授权信息
+// VideoPlayAuth 获取视频的播放授权信息
 func (s *Service) VideoPlayAuth(aid int, videoID string) (*VideoPlayAuth, error) {
 	body, err := s.requestVideoPlayAuth(aid, videoID)
 	if err != nil {
@@ -109,7 +109,7 @@ func (s *Service) VideoPlayAuth(aid int, videoID string) (*VideoPlayAuth, error)
 	return videoPlayAuth, nil
 }
 
-//VideoPlayInfo 获取视频播放信息
+// VideoPlayInfo 获取视频播放信息
 func (s *Service) VideoPlayInfo(playAuth string) (*VideoPlayInfo, error) {
 	body, err := s.requestVideoPlayInfo(playAuth)
 	if err != nil {

@@ -83,6 +83,7 @@ func DownloadAllColumn(c *cli.Context) {
 	}
 
 	renderCourses(columns)
+	var have bool = false
 	for index, column := range columns {
 		fmt.Println("第 ", index, "/", len(columns), " 名称:", column.ColumnTitle)
 
@@ -140,7 +141,9 @@ func DownloadAllColumn(c *cli.Context) {
 				}
 
 				if !exist {
-					time.Sleep(3 * time.Second)
+					time.Sleep(5 * time.Second)
+				} else {
+					have = true
 				}
 			}
 		}
@@ -149,5 +152,10 @@ func DownloadAllColumn(c *cli.Context) {
 			fmt.Println("GetColumn Mkdir:", errors[0])
 			return
 		}
+		if !have {
+			time.Sleep(30 * time.Second)
+			have = false
+		}
+
 	}
 }

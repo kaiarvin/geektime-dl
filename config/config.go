@@ -20,11 +20,11 @@ const (
 var (
 	configFilePath = filepath.Join(GetConfigDir(), ConfigName)
 
-	//Instance 配置信息 全局调用
+	// Instance 配置信息 全局调用
 	Instance = NewConfig(configFilePath)
 )
 
-//ConfigsData 配置数据
+// ConfigsData 配置数据
 type ConfigsData struct {
 	AcitveUID    int
 	Geektimes    Geektimes
@@ -37,21 +37,21 @@ type ConfigsData struct {
 	service        *service.Service
 }
 
-//Init 初始化配置
+// Init 初始化配置
 func (c *ConfigsData) Init() error {
 	if c.configFilePath == "" {
 		return ErrConfigFilePathNotSet
 	}
 
-	//初始化默认配置
+	// 初始化默认配置
 	c.initDefaultConfig()
-	//从配置文件中加载配置
+	// 从配置文件中加载配置
 	err := c.loadConfigFromFile()
 	if err != nil {
 		return err
 	}
 
-	//初始化登陆用户信息
+	// 初始化登陆用户信息
 	err = c.initActiveUser()
 	if err != nil {
 		return nil
@@ -65,7 +65,7 @@ func (c *ConfigsData) Init() error {
 }
 
 func (c *ConfigsData) initActiveUser() error {
-	//如果已经初始化过，则跳过
+	// 如果已经初始化过，则跳过
 	if c.AcitveUID > 0 && c.activeUser != nil && c.activeUser.ID == c.AcitveUID {
 		return nil
 	}
@@ -91,7 +91,7 @@ func (c *ConfigsData) initActiveUser() error {
 	return ErrNotLogin
 }
 
-//Save 保存配置
+// Save 保存配置
 func (c *ConfigsData) Save() error {
 	err := c.lazyOpenConfigFile()
 	if err != nil {
@@ -101,9 +101,8 @@ func (c *ConfigsData) Save() error {
 	c.fileMu.Lock()
 	defer c.fileMu.Unlock()
 
-	//todo 保存配置的数据
+	// todo 保存配置的数据
 	data, err := jsoniter.MarshalIndent((*configJSONExport)(unsafe.Pointer(c)), "", " ")
-
 	if err != nil {
 		panic(err)
 	}
@@ -128,7 +127,7 @@ func (c *ConfigsData) Save() error {
 }
 
 func (c *ConfigsData) initDefaultConfig() {
-	//todo 默认配置
+	// todo 默认配置
 }
 
 func (c *ConfigsData) loadConfigFromFile() error {
@@ -154,7 +153,7 @@ func (c *ConfigsData) loadConfigFromFile() error {
 		return nil
 	}
 
-	//从配置文件中加载配置
+	// 从配置文件中加载配置
 	decoder := jsoniter.NewDecoder(c.configFile)
 	decoder.Decode((*configJSONExport)(unsafe.Pointer(c)))
 
@@ -166,8 +165,8 @@ func (c *ConfigsData) lazyOpenConfigFile() (err error) {
 		return nil
 	}
 	c.fileMu.Lock()
-	os.MkdirAll(filepath.Dir(c.configFilePath), 0700)
-	c.configFile, err = os.OpenFile(c.configFilePath, os.O_CREATE|os.O_RDWR, 0600)
+	os.MkdirAll(filepath.Dir(c.configFilePath), 0o700)
+	c.configFile, err = os.OpenFile(c.configFilePath, os.O_CREATE|os.O_RDWR, 0o600)
 	c.fileMu.Unlock()
 
 	if err != nil {
@@ -183,7 +182,7 @@ func (c *ConfigsData) lazyOpenConfigFile() (err error) {
 	return nil
 }
 
-//NewConfig new config
+// NewConfig new config
 func NewConfig(configFilePath string) *ConfigsData {
 	c := &ConfigsData{
 		configFilePath: configFilePath,
@@ -192,10 +191,10 @@ func NewConfig(configFilePath string) *ConfigsData {
 	return c
 }
 
-//Geektimes 极客时间用户
+// Geektimes 极客时间用户
 type Geektimes []*Geektime
 
-//GetConfigDir 配置文件夹
+// GetConfigDir 配置文件夹
 func GetConfigDir() string {
 	configDir, ok := os.LookupEnv(EnvConfigDir)
 	if ok {
@@ -212,12 +211,12 @@ func GetConfigDir() string {
 	return filepath.Join("/tmp", "geekbang")
 }
 
-//ActiveUser active user
+// ActiveUser active user
 func (c *ConfigsData) ActiveUser() *Geektime {
 	return c.activeUser
 }
 
-//ActiveUserService user service
+// ActiveUserService user service
 func (c *ConfigsData) ActiveUserService() *service.Service {
 	if c.service == nil {
 		c.service = c.activeUser.Service()

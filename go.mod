@@ -4,8 +4,8 @@ go 1.13
 
 require (
 	github.com/cheggaaa/pb v1.0.25
-	github.com/chromedp/cdproto v0.0.0-20210104223854-2cc87dae3ee3
-	github.com/chromedp/chromedp v0.6.0
+	github.com/chromedp/cdproto v0.0.0-20220515234810-83d799542a04
+	github.com/chromedp/chromedp v0.8.2
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/json-iterator/go v1.1.9
 	github.com/mattn/go-colorable v0.1.12 // indirect

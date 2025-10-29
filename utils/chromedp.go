@@ -2,7 +2,6 @@ package utils
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"strconv"
@@ -16,32 +15,48 @@ import (
 	"github.com/chromedp/chromedp/device"
 )
 
-// ColumnPrintToPDF print pdf
-func ColumnPrintToPDF(aid int, filename string, cookies map[string]string) error {
-	var buf []byte
+var (
+	pctx    context.Context
+	pcancel context.CancelFunc
+)
+
+//InitChromedp init chromedp
+func InitChromedp() error {
 	// create chrome instance
-	ctx, cancel := chromedp.NewContext(
+	pctx, pcancel = chromedp.NewContext(
 		context.Background(),
 		chromedp.WithLogf(log.Printf),
 	)
-	defer cancel()
+
+	return chromedp.Run(pctx)
+}
+
+//CancelChromedp close chromedp
+func CancelChromedp() {
+	pcancel()
+}
+
+//ColumnPrintToPDF print pdf
+func ColumnPrintToPDF(aid int, filename string, cookies map[string]string) error {
+	var buf []byte
 
 	// create a timeout
-	ctx, cancel = context.WithTimeout(ctx, 60*time.Second)
+	ctx, cancel := context.WithTimeout(pctx, 120*time.Second)
 	defer cancel()
 
 	err := chromedp.Run(ctx,
 		chromedp.Tasks{
-			chromedp.Emulate(device.KindleFireHDX),
+			chromedp.Emulate(device.IPhone7),
 			enableLifeCycleEvents(),
 			setCookies(cookies),
-			navigateAndWaitFor(`https://time.geekbang.org/column/article/`+strconv.Itoa(aid), "firstImagePaint"),
+			navigateAndWaitFor(`https://time.geekbang.org/column/article/`+strconv.Itoa(aid), "networkIdle"),
 			chromedp.ActionFunc(func(ctx context.Context) error {
 				s := `
-					document.querySelector('.iconfont').parentElement.parentElement.style.display='none';
-					var bottom = document.querySelector('.bottom-wrapper');
+				document.querySelector('.iconfont').parentElement.parentElement.style.display='none';
+				document.querySelector('.Index_white_1gqaD>div.iconfont').style.display='none';
+				var bottom = document.querySelector('.sub-bottom-wrapper');
 					if(bottom){
-						bottom.parentElement.style.display='none'
+						bottom.style.display='none'
 					}
 					[...document.querySelectorAll('ul>li>div>div>div:nth-child(2)>span')].map(e=>e.click());
 				`
@@ -49,9 +64,11 @@ func ColumnPrintToPDF(aid int, filename string, cookies map[string]string) error
 				if err != nil {
 					return err
 				}
+
 				if exp != nil {
 					return exp
 				}
+
 				return nil
 			}),
 			chromedp.ActionFunc(func(ctx context.Context) error {
@@ -68,25 +85,28 @@ func ColumnPrintToPDF(aid int, filename string, cookies map[string]string) error
 				if err != nil {
 					return err
 				}
+
 				if exp != nil {
 					return exp
 				}
+
 				return nil
 			}),
+
 			chromedp.ActionFunc(func(ctx context.Context) error {
 				// time.Sleep(time.Second * 5)
 				var err error
-				buf, _, err = page.PrintToPDF().WithPrintBackground(false).Do(ctx)
-				// fmt.Println(string(buf))
+				buf, _, err = page.PrintToPDF().WithPrintBackground(true).Do(ctx)
 				return err
 			}),
 		},
 	)
+
 	if err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(filename, buf, 0o644)
+	return ioutil.WriteFile(filename, buf, 0644)
 }
 
 func setCookies(cookies map[string]string) chromedp.ActionFunc {
@@ -96,7 +116,6 @@ func setCookies(cookies map[string]string) chromedp.ActionFunc {
 		for key, value := range cookies {
 			err := network.SetCookie(key, value).WithExpires(&expr).WithDomain(".geekbang.org").WithHTTPOnly(true).Do(ctx)
 			if err != nil {
-				fmt.Println("setCookies Error! err:", err)
 				return err
 			}
 		}

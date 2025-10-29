@@ -2,7 +2,6 @@ package requester
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -11,9 +10,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
-// HTTPGet 简单实现 http 访问 GET 请求
+//HTTPGet 简单实现 http 访问 GET 请求
 func HTTPGet(urlStr string) ([]byte, error) {
 	res, err := DefaultClient.Get(urlStr)
 
@@ -81,7 +82,7 @@ func (h *HTTPClient) Req(method string, urlStr string, post interface{}, header 
 		case io.Reader:
 			obody = value
 		case map[string]string, map[string]int, map[string]interface{}, []int, []string:
-			postData, err := json.Marshal(value)
+			postData, err := jsoniter.Marshal(value)
 			if err != nil {
 				return nil, err
 			}

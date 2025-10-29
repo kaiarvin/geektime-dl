@@ -135,7 +135,7 @@ func DownloadAllColumn(c *cli.Context) {
 				if !datum.IsCanDL {
 					continue
 				}
-				err, exist := downloader.PrintToPDF(datum, cookies, path)
+				err := downloader.PrintToPDF(datum, cookies, path)
 				if err != nil {
 					errors = append(errors, err)
 				}

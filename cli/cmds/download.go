@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/mmzou/geektime-dl/cli/application"
 	"github.com/mmzou/geektime-dl/downloader"
@@ -15,7 +14,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-// NewDownloadCommand login command
+//NewDownloadCommand login command
 func NewDownloadCommand() []cli.Command {
 	return []cli.Command{
 		{
@@ -36,7 +35,7 @@ func downloadAction(c *cli.Context) error {
 		return errors.New("请输入课程ID")
 	}
 
-	// 课程目录ID
+	//课程目录ID
 	aid := 0
 	if len(args) > 1 {
 		aid, err = strconv.Atoi(args.Get(1))
@@ -58,48 +57,61 @@ func downloadAction(c *cli.Context) error {
 		return nil
 	}
 
-	sub := "MP4"
-	if course.IsColumn() {
-		sub = "MP3"
+	// 专栏下载时，如果没有指定pdf和mp3，则默认同时下载
+	if course.IsColumn() && !_pdf && !_mp3 {
+		_pdf = true
+		_mp3 = true
 	}
-
-	path, err := utils.Mkdir(utils.FileName(course.ColumnTitle, ""), sub)
 
 	errors := make([]error, 0)
-	for _, datum := range downloadData.Data {
-		if !datum.IsCanDL {
-			continue
-		}
-		if err := downloader.Download(datum, _stream, path); err != nil {
-			errors = append(errors, err)
-		}
-	}
 
-	if len(errors) > 0 {
-		return errors[0]
-	}
+	// 视频或者音频下载
+	if course.IsVideo() || (course.IsColumn() && _mp3) {
+		sub := "MP4"
+		if course.IsColumn() {
+			sub = "MP3"
+		}
 
-	// 如果是专栏，则需要打印内容
-	if course.IsColumn() {
-		path, err := utils.Mkdir(utils.FileName(course.ColumnTitle, ""), "PDF")
+		// 创建文件夹
+		path, err := utils.Mkdir(utils.FileName(course.ColumnTitle, ""), sub)
 		if err != nil {
 			return err
 		}
-		cookies := application.LoginedCookies()
+
 		for _, datum := range downloadData.Data {
 			if !datum.IsCanDL {
 				continue
 			}
-
-			err, exist := downloader.PrintToPDF(datum, cookies, path)
-			if err != nil {
+			if err := downloader.Download(datum, _stream, path); err != nil {
 				errors = append(errors, err)
 			}
+		}
 
-			if !exist {
-				time.Sleep(3 * time.Second)
+		if len(errors) > 0 {
+			return errors[0]
+		}
+	}
+
+	//如果是专栏，则需要打印内容
+	if course.IsColumn() && _pdf {
+		path, err := utils.Mkdir(utils.FileName(course.ColumnTitle, ""), "PDF")
+		if err != nil {
+			return err
+		}
+
+		if err := utils.InitChromedp(); err != nil {
+			errors = append(errors, err)
+		} else {
+			defer utils.CancelChromedp()
+			cookies := application.LoginedCookies()
+			for _, datum := range downloadData.Data {
+				if !datum.IsCanDL {
+					continue
+				}
+				if err := downloader.PrintToPDF(datum, cookies, path); err != nil {
+					errors = append(errors, err)
+				}
 			}
-
 		}
 	}
 
@@ -110,8 +122,9 @@ func downloadAction(c *cli.Context) error {
 	return nil
 }
 
-// 生成下载数据
+//生成下载数据
 func extractDownloadData(course *service.Course, articles []*service.Article, aid int) downloader.Data {
+
 	downloadData := downloader.Data{
 		Title: course.ColumnTitle,
 	}
@@ -127,7 +140,7 @@ func extractDownloadData(course *service.Course, articles []*service.Article, ai
 	return downloadData
 }
 
-// 生成专栏下载数据
+//生成专栏下载数据
 func extractColumnDownloadData(articles []*service.Article, aid int) []downloader.Datum {
 	data := downloader.EmptyData
 
@@ -167,7 +180,7 @@ func extractColumnDownloadData(articles []*service.Article, aid int) []downloade
 	return data
 }
 
-// 生成视频下载数据
+//生成视频下载数据
 func extractVideoDownloadData(articles []*service.Article, aid int) []downloader.Datum {
 	data := downloader.EmptyData
 

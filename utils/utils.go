@@ -15,13 +15,13 @@ import (
 // MAXLENGTH Maximum length of file name
 const MAXLENGTH = 80
 
-// FileName filter invalid string
+//FileName filter invalid string
 func FileName(name string, ext string) string {
-	rep := strings.NewReplacer("\n", " ", "/", " ", "|", "-", ": ", "：", ":", "：", "'", "’", "\t", " ", "\b", " ", "\\", " ")
+	rep := strings.NewReplacer("\n", " ", "/", " ", "|", "-", ": ", "：", ":", "：", "'", "’", "\t", " ")
 	name = rep.Replace(name)
 
 	if runtime.GOOS == "windows" {
-		rep := strings.NewReplacer("\"", " ", "?", " ", "*", " ", "\\", " ", "<", " ", ">", " ", ":", " ", "：", " ", "\b", " ")
+		rep := strings.NewReplacer("\"", " ", "?", " ", "*", " ", "\\", " ", "<", " ", ">", " ", ":", " ", "：", " ")
 		name = rep.Replace(name)
 	}
 
@@ -34,7 +34,7 @@ func FileName(name string, ext string) string {
 	return limitedName
 }
 
-// LimitLength cut string
+//LimitLength cut string
 func LimitLength(s string, length int) string {
 	ellipses := "..."
 
@@ -60,7 +60,7 @@ func FilePath(name, ext string, escape bool) (string, error) {
 	return outputPath, nil
 }
 
-// Mkdir mkdir path
+//Mkdir mkdir path
 func Mkdir(elem ...string) (string, error) {
 	path := filepath.Join(elem...)
 
